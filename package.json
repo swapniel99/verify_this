@@ -1,0 +1,18 @@
+{
+  "name": "verify_this",
+  "version": "1.0.0",
+  "description": "",
+  "main": "background.js",
+  "scripts": {
+    "build": "esbuild src/background.js --bundle --outfile=background.js --format=iife",
+    "watch": "esbuild src/background.js --bundle --outfile=background.js --format=iife --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/genai": "^1.50.1",
+    "esbuild": "^0.28.0"
+  }
+}
