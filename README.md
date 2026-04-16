@@ -1,13 +1,12 @@
 # Verify This
 
-A Chrome extension that fact-checks highlighted text on the internet using Google's Gemini AI with web search grounding.
+A Chrome extension that fact-checks highlighted text on the internet using Google's Gemini AI.
 
 ## Features
 
 - **One-click fact-checking**: Right-click on any text and select "Verify This" to instantly fact-check it
 - **Multi-turn conversations**: Ask follow-up questions and continue discussions about fact-checks
 - **Chat history**: Resume previous fact-checks and conversations anytime
-- **Web sources**: Get cited sources that support or refute claims
 - **Theme support**: Light, dark, or system theme modes
 - **Persistent storage**: All conversations saved locally using Chrome storage API
 
@@ -131,7 +130,6 @@ verify_this/
 
 Uses Google's `@google/genai` SDK with:
 - **Model**: `gemini-3.1-flash-lite-preview`
-- **Grounding**: Web search tool enabled for current facts
 - **System instruction**: Configured for fact-checking task
 
 ## Configuration
