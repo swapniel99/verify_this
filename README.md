@@ -10,7 +10,7 @@ A Chrome extension that fact-checks highlighted text on the internet using Googl
 - **Theme support**: Light, dark, or system theme modes
 - **Persistent storage**: All conversations saved locally using Chrome storage API
 
-## Demo
+## Demo Video
 
 [![Verify This Demo Video](https://img.youtube.com/vi/4sdVwCg4q00/0.jpg)](https://youtu.be/4sdVwCg4q00)
 
