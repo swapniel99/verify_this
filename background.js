@@ -17968,10 +17968,15 @@ Be concise but thorough. If the user asks follow-up questions, answer them in co
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.filter((c) => c.web)?.map((c) => ({ title: c.web.title, url: c.web.uri })) || [];
         const { chats = {} } = await chrome.storage.local.get("chats");
         if (chats[chatId]) {
-          chats[chatId].messages.push(
-            { role: "user", text: userMessage, timestamp: Date.now() },
-            { role: "model", text: text || "No response", sources, timestamp: Date.now() }
-          );
+          if (!chats[chatId].messages) {
+            chats[chatId].messages = [];
+          }
+          chats[chatId].messages.push({
+            role: "model",
+            text: text || "No response",
+            sources,
+            timestamp: Date.now()
+          });
           await chrome.storage.local.set({ chats });
         }
         return { text, sources };

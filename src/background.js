@@ -106,13 +106,18 @@ async function callGemini(chatId, userMessage, history) {
       ?.filter((c) => c.web)
       ?.map((c) => ({ title: c.web.title, url: c.web.uri })) || [];
 
-  // Save to chat history
+  // Save model response to chat history (user message is saved by frontend)
   const { chats = {} } = await chrome.storage.local.get("chats");
   if (chats[chatId]) {
-    chats[chatId].messages.push(
-      { role: "user", text: userMessage, timestamp: Date.now() },
-      { role: "model", text: text || "No response", sources, timestamp: Date.now() }
-    );
+    if (!chats[chatId].messages) {
+      chats[chatId].messages = [];
+    }
+    chats[chatId].messages.push({
+      role: "model",
+      text: text || "No response",
+      sources,
+      timestamp: Date.now(),
+    });
     await chrome.storage.local.set({ chats });
   }
 

@@ -67,6 +67,13 @@ $("#btn-save-key").addEventListener("click", () => {
 async function renderChatList() {
   const { chats = {} } = await chrome.storage.local.get("chats");
   const list = $("#chat-list");
+
+  // Ensure all chats have messages array
+  Object.values(chats).forEach((chat) => {
+    if (!chat.messages) chat.messages = [];
+  });
+  await chrome.storage.local.set({ chats });
+
   const sorted = Object.values(chats).sort((a, b) => b.createdAt - a.createdAt);
 
   if (sorted.length === 0) {
@@ -119,8 +126,15 @@ async function openChat(chatId) {
   const messagesEl = $("#messages");
   messagesEl.innerHTML = "";
 
-  for (const msg of chat.messages) {
+  const messages = chat.messages || [];
+  for (const msg of messages) {
     appendMessage(msg.role, msg.text, msg.sources);
+  }
+
+  // If last message is from user, a response is still being generated
+  const lastMsg = messages[messages.length - 1];
+  if (lastMsg && lastMsg.role === "user") {
+    showLoading();
   }
 
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -162,16 +176,26 @@ function removeLoading() {
 async function sendMessage(text) {
   if (!text.trim() || !activeChatId) return;
 
+  // Capture chatId at call time — activeChatId may change while awaiting
+  const chatId = activeChatId;
+
   appendMessage("user", text);
+
+  // Save user message to storage immediately so navigating away doesn't lose it
+  const { chats = {} } = await chrome.storage.local.get("chats");
+  if (chats[chatId]) {
+    if (!chats[chatId].messages) chats[chatId].messages = [];
+    chats[chatId].messages.push({ role: "user", text, timestamp: Date.now() });
+    await chrome.storage.local.set({ chats });
+  }
+
   showLoading();
 
-  const { chats = {} } = await chrome.storage.local.get("chats");
-  const chat = chats[activeChatId];
-  const history = chat ? chat.messages : [];
+  const history = chats[chatId]?.messages || [];
 
   const response = await chrome.runtime.sendMessage({
     type: "call-gemini",
-    chatId: activeChatId,
+    chatId,
     text,
     history,
   });
@@ -179,9 +203,26 @@ async function sendMessage(text) {
   removeLoading();
 
   if (response.error) {
-    appendMessage("model", `Error: ${response.error}`);
+    // Only append error inline if still on the same chat
+    if (activeChatId === chatId) {
+      appendMessage("model", `Error: ${response.error}`);
+    }
   } else {
-    appendMessage("model", response.text, response.sources);
+    // Reload from storage — background has already saved the model response
+    if (activeChatId === chatId) {
+      await reloadMessages(chatId);
+    }
+  }
+}
+
+async function reloadMessages(chatId) {
+  const { chats = {} } = await chrome.storage.local.get("chats");
+  const chat = chats[chatId];
+  if (!chat) return;
+  const messagesEl = $("#messages");
+  messagesEl.innerHTML = "";
+  for (const msg of (chat.messages || [])) {
+    appendMessage(msg.role, msg.text, msg.sources);
   }
 }
 
