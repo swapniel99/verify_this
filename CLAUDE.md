@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-**Build the extension (bundles src/background.js):**
+**Build the extension (bundles src/background.js and src/sidepanel.js):**
 ```bash
 pnpm build
 ```
@@ -32,11 +32,11 @@ After making changes, reload the extension in Chrome to see them.
    - Persists chat messages to Chrome storage
    - Coordinates with content script to open the side panel
 
-2. **Side Panel UI** (`sidepanel.html`, `sidepanel.js`)
+2. **Side Panel UI** (`sidepanel.html`, `src/sidepanel.js` → bundled as `sidepanel.js`)
    - Displays chat list, chat view, and settings
    - Manages theme (light/dark/system)
-   - Handles message sending and rendering
-   - Loads chats from storage and watches for updates
+   - Handles message sending and rendering (uses `marked` for markdown)
+   - Synchronizes with background via `chrome.storage.onChanged` reactive updates
 
 3. **Content Script** (`src/content.js` → bundled as `content.js`)
    - Minimal relay between background and page context
@@ -101,9 +101,8 @@ All data lives in `chrome.storage.local` (sync-safe, no quota limits):
 - Return `true` from listener to keep channel open for `sendResponse()`
 
 **Storage watchers:**
-- Side panel polls storage with `chrome.storage.local.get()` inside async functions
-- Currently NO `chrome.storage.onChanged` listener—updates detected via manual polling
-- Could add watcher for real-time updates if UI feels laggy
+- Side panel uses `chrome.storage.onChanged` listener to detect updates (e.g., when background saves a response) and reloads the UI automatically.
+- Polling is not required.
 
 **DOM utilities:**
 - `const $ = (s) => document.querySelector(s)` — shorthand for selectors in sidepanel.js
@@ -120,9 +119,9 @@ All data lives in `chrome.storage.local` (sync-safe, no quota limits):
 | File | Purpose |
 |------|---------|
 | `src/background.js` | Service worker—Gemini API calls, storage, context menu |
+| `src/sidepanel.js` | UI source code—messaging, markdown rendering, theme |
 | `src/content.js` | Minimal content script for sidePanel.open() relay |
 | `sidepanel.html` | HTML structure (chat list, chat view, settings) |
-| `sidepanel.js` | UI logic, messaging, storage polling, theme |
 | `sidepanel.css` | Styling and light/dark theme variables |
 | `manifest.json` | Extension config (permissions, background worker, content scripts) |
 | `package.json` | Dependencies (`@google/genai`, `esbuild`), build scripts |
@@ -151,11 +150,11 @@ All data lives in `chrome.storage.local` (sync-safe, no quota limits):
 ## Build Output
 
 `pnpm build` runs esbuild with these settings:
-- Input: `src/background.js`
-- Output: `background.js` (bundled, IIFE format)
-- Note: `src/content.js` is currently NOT bundled; it's referenced directly in manifest (consider bundling if adding imports)
+- Input: `src/background.js`, `src/sidepanel.js`
+- Output: `background.js`, `sidepanel.js` (bundled, IIFE format)
+- Note: `src/content.js` is currently NOT bundled; it's referenced directly in manifest.
 
-The bundled output includes all dependencies from `@google/genai` inline. No external imports at runtime.
+The bundled output includes all dependencies like `@google/genai` and `marked` inline.
 
 ## API Key & Permissions
 

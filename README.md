@@ -93,14 +93,15 @@ verify_this/
 ├── manifest.json          # Extension configuration
 ├── sidepanel.html         # Side panel UI
 ├── sidepanel.css          # Styling and theme definitions
-├── sidepanel.js           # UI logic and chat management
+├── sidepanel.js           # Bundled UI logic (generated)
 ├── background.js          # Bundled service worker (generated)
 ├── content.js             # Content script (generated)
 ├── src/
 │   ├── background.js      # Service worker source
+│   ├── sidepanel.js       # UI logic source
 │   └── content.js         # Content script source
 ├── icons/                 # Extension icons
-└── package.json           # Dependencies and scripts
+└── package.json           # Dependencies and scripts (marked, esbuild)
 ```
 
 ## Architecture
@@ -112,11 +113,11 @@ verify_this/
 - Manages Gemini API calls
 - Stores fact-check responses with sources
 
-**Side Panel** (`sidepanel.html`, `sidepanel.js`)
-- Chat list view with all previous conversations
-- Chat view for conversations with multi-turn support
-- Settings view for API key configuration
-- Theme toggle and management
+**Side Panel** (`sidepanel.html`, `src/sidepanel.js` → bundled as `sidepanel.js`)
+- Displays chat history and settings
+- Direct Gemini interaction with Markdown support
+- Real-time UI updates via `chrome.storage.onChanged`
+- Integrated theme management (Light/Dark/System)
 
 **Content Script** (`src/content.js`)
 - Message relay between background and content context
