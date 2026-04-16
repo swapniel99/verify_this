@@ -66,6 +66,9 @@ $("#btn-settings").addEventListener("click", async () => {
   document.querySelectorAll(".theme-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.theme === theme);
   });
+  // Update grounding toggle
+  const { groundingEnabled = false } = await chrome.storage.local.get("groundingEnabled");
+  $("#grounding-toggle").checked = groundingEnabled;
   showView("settings-view");
 });
 
@@ -254,6 +257,11 @@ $("#user-input").addEventListener("keydown", (e) => {
 $("#user-input").addEventListener("input", function () {
   this.style.height = "auto";
   this.style.height = Math.min(this.scrollHeight, 100) + "px";
+});
+
+// Grounding toggle
+$("#grounding-toggle").addEventListener("change", () => {
+  chrome.storage.local.set({ groundingEnabled: $("#grounding-toggle").checked });
 });
 
 // --- Pick up pending fact-checks from storage ---

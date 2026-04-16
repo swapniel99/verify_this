@@ -1,9 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 
-const SYSTEM_INSTRUCTION = `You are a fact-checking assistant. When given a claim or piece of text, verify its accuracy using grounded search results. Provide:
+const SYSTEM_INSTRUCTION = `You are a fact-checking assistant. When given a claim or piece of text, verify its accuracy. Provide:
 1. A clear verdict (True / False / Partially True / Unverifiable)
-2. A brief explanation with evidence from sources
-3. Key sources that support or refute the claim
+2. A brief explanation with evidence
+3. Key sources that support or refute the claim (if available)
 
 Be concise but thorough. If the user asks follow-up questions, answer them in context of the original fact-check.`;
 
@@ -79,18 +79,25 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function callGemini(chatId, userMessage, history) {
-  const { geminiApiKey } = await chrome.storage.local.get("geminiApiKey");
+  const { geminiApiKey, groundingEnabled = false } = await chrome.storage.local.get(["geminiApiKey", "groundingEnabled"]);
   if (!geminiApiKey) {
     return { error: "API key not set. Please set your Gemini API key in settings." };
   }
 
   const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
+  const config = {
+    systemInstruction: SYSTEM_INSTRUCTION,
+  };
+
+  // Add grounding tool if enabled
+  if (groundingEnabled) {
+    config.tools = [{ googleSearch: {} }];
+  }
+
   const chat = ai.chats.create({
     model: "gemini-3.1-flash-lite-preview",
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-    },
+    config,
     history: history.map((m) => ({
       role: m.role === "user" ? "user" : "model",
       parts: [{ text: m.text }],

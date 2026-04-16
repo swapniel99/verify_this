@@ -68,6 +68,12 @@ A Chrome extension that fact-checks highlighted text on the internet using Googl
 - Click the theme icon in the header to toggle between light and dark modes
 - Go to Settings to choose "System" theme (follows OS preference)
 
+### Web Search Grounding (Optional)
+
+- Go to Settings and enable "Enable Web Search Grounding"
+- Requires a paid Gemini API tier
+- When enabled, responses will cite sources from web search results
+
 ## Development
 
 ### Watch Mode
@@ -143,6 +149,13 @@ Get a free API key at [Google AI Studio](https://aistudio.google.com/apikey):
 2. Click "Create API Key"
 3. Copy the key
 4. Paste into extension Settings
+
+### Web Search Grounding
+
+To enable web search grounding:
+1. You need a paid Gemini API tier
+2. In Settings, enable "Enable Web Search Grounding"
+3. The model will now use Google Search to cite sources in responses
 
 ### Storage Limits
 
