@@ -201,19 +201,14 @@ async function sendMessage(text) {
     history,
   });
 
-  removeLoading();
-
   if (response.error) {
-    // Only append error inline if still on the same chat
+    // Show error inline; storage listener won't fire since nothing was saved
     if (activeChatId === chatId) {
+      removeLoading();
       appendMessage("model", `Error: ${response.error}`);
     }
-  } else {
-    // Reload from storage — background has already saved the model response
-    if (activeChatId === chatId) {
-      await reloadMessages(chatId);
-    }
   }
+  // On success, the storage.onChanged listener detects the saved response and reloads
 }
 
 async function reloadMessages(chatId) {
@@ -265,10 +260,25 @@ async function checkPendingFactCheck() {
   }
 }
 
-// Listen for new pending fact-checks while panel is already open
+// Listen for storage changes
 chrome.storage.onChanged.addListener((changes) => {
+  // New pending fact-check arrived
   if (changes.pendingFactCheck && changes.pendingFactCheck.newValue) {
     checkPendingFactCheck();
+  }
+
+  // Current chat's data was updated (e.g. response saved by background)
+  if (changes.chats && activeChatId) {
+    const updatedChats = changes.chats.newValue;
+    if (!updatedChats) return;
+    const chat = updatedChats[activeChatId];
+    if (!chat) return;
+    const messages = chat.messages || [];
+    const lastMsg = messages[messages.length - 1];
+    // If response just arrived (last message is now from model) and loading is showing
+    if (lastMsg && lastMsg.role === "model" && $("#loading-msg")) {
+      reloadMessages(activeChatId);
+    }
   }
 });
 
