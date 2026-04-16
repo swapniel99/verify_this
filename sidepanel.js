@@ -211,6 +211,11 @@ async function checkPendingFactCheck() {
   const { pendingFactCheck } = await chrome.storage.local.get("pendingFactCheck");
   if (pendingFactCheck) {
     await chrome.storage.local.remove("pendingFactCheck");
+    // Clear the badge
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabs[0]) {
+      chrome.action.setBadgeText({ text: "", tabId: tabs[0].id });
+    }
     activeChatId = pendingFactCheck.chatId;
     showView("chat-view");
     $("#messages").innerHTML = "";

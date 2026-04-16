@@ -17895,6 +17895,13 @@ Be concise but thorough. If the user asks follow-up questions, answer them in co
         });
         chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
       });
+      chrome.action.onClicked.addListener(async (tab) => {
+        try {
+          await chrome.sidePanel.open({ tabId: tab.id });
+        } catch (err) {
+          console.log("Failed to open side panel:", err);
+        }
+      });
       chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         if (info.menuItemId === "verify-this" && info.selectionText) {
           const chatId = `chat_${Date.now()}`;
@@ -17915,13 +17922,29 @@ Be concise but thorough. If the user asks follow-up questions, answer them in co
               sourceUrl: tab.url
             }
           });
-          await chrome.sidePanel.open({ tabId: tab.id });
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: "open-panel", tabId: tab.id });
+          } catch (err) {
+            console.log("Content script not available, trying direct open");
+            try {
+              await chrome.sidePanel.open({ tabId: tab.id });
+            } catch (err2) {
+              console.log("sidePanel.open failed, showing badge");
+              chrome.action.setBadgeText({ text: "1", tabId: tab.id });
+              chrome.action.setBadgeBackgroundColor({ color: "#4285f4" });
+            }
+          }
         }
       });
       chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         if (message.type === "call-gemini") {
           callGemini(message.chatId, message.text, message.history).then(sendResponse).catch((err) => sendResponse({ error: err.message }));
           return true;
+        }
+        if (message.type === "do-open-panel") {
+          chrome.sidePanel.open({ tabId: message.tabId }).catch((err) => {
+            console.log("Failed to open side panel:", err);
+          });
         }
       });
       async function callGemini(chatId, userMessage, history) {

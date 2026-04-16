@@ -17,6 +17,14 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
+chrome.action.onClicked.addListener(async (tab) => {
+  try {
+    await chrome.sidePanel.open({ tabId: tab.id });
+  } catch (err) {
+    console.log("Failed to open side panel:", err);
+  }
+});
+
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "verify-this" && info.selectionText) {
     const chatId = `chat_${Date.now()}`;
@@ -40,7 +48,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       },
     });
 
-    await chrome.sidePanel.open({ tabId: tab.id });
+    // Use content script as intermediary to open side panel
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: "open-panel", tabId: tab.id });
+    } catch (err) {
+      console.log("Content script not available, trying direct open");
+      try {
+        await chrome.sidePanel.open({ tabId: tab.id });
+      } catch (err2) {
+        console.log("sidePanel.open failed, showing badge");
+        chrome.action.setBadgeText({ text: "1", tabId: tab.id });
+        chrome.action.setBadgeBackgroundColor({ color: "#4285f4" });
+      }
+    }
   }
 });
 
@@ -50,6 +70,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .then(sendResponse)
       .catch((err) => sendResponse({ error: err.message }));
     return true;
+  }
+  if (message.type === "do-open-panel") {
+    chrome.sidePanel.open({ tabId: message.tabId }).catch((err) => {
+      console.log("Failed to open side panel:", err);
+    });
   }
 });
 
