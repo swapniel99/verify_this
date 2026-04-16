@@ -1,5 +1,13 @@
+import { marked } from "marked";
+
 const $ = (s) => document.querySelector(s);
 let activeChatId = null;
+
+// Configure marked
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
 
 // --- Theme ---
 function applyTheme(theme) {
@@ -9,9 +17,6 @@ function applyTheme(theme) {
   } else {
     document.documentElement.setAttribute("data-theme", theme);
   }
-  document.querySelectorAll(".theme-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.theme === theme);
-  });
 }
 
 async function initTheme() {
@@ -28,6 +33,9 @@ document.querySelectorAll(".theme-btn").forEach((btn) => {
     const theme = btn.dataset.theme;
     chrome.storage.local.set({ theme });
     applyTheme(theme);
+    document.querySelectorAll(".theme-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.theme === theme);
+    });
   });
 });
 
@@ -61,12 +69,10 @@ $("#btn-back").addEventListener("click", () => {
 $("#btn-settings").addEventListener("click", async () => {
   const { geminiApiKey = "" } = await chrome.storage.local.get("geminiApiKey");
   $("#api-key-input").value = geminiApiKey;
-  // Update theme buttons to match current theme
   const { theme = "system" } = await chrome.storage.local.get("theme");
   document.querySelectorAll(".theme-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.theme === theme);
   });
-  // Update grounding toggle
   const { groundingEnabled = false } = await chrome.storage.local.get("groundingEnabled");
   $("#grounding-toggle").checked = groundingEnabled;
   showView("settings-view");
@@ -84,7 +90,6 @@ async function renderChatList() {
   const { chats = {} } = await chrome.storage.local.get("chats");
   const list = $("#chat-list");
 
-  // Ensure all chats have messages array
   Object.values(chats).forEach((chat) => {
     if (!chat.messages) chat.messages = [];
   });
@@ -147,7 +152,6 @@ async function openChat(chatId) {
     appendMessage(msg.role, msg.text, msg.sources);
   }
 
-  // If last message is from user, a response is still being generated
   const lastMsg = messages[messages.length - 1];
   if (lastMsg && lastMsg.role === "user") {
     showLoading();
@@ -160,7 +164,15 @@ function appendMessage(role, text, sources) {
   const messagesEl = $("#messages");
   const div = document.createElement("div");
   div.className = `message ${role}`;
-  div.textContent = text;
+  
+  // Use marked to parse markdown
+  if (role === 'model') {
+    div.innerHTML = marked.parse(text);
+    // Ensure links open in new tab
+    div.querySelectorAll('a').forEach(a => a.target = '_blank');
+  } else {
+    div.textContent = text;
+  }
 
   if (sources && sources.length > 0) {
     const srcDiv = document.createElement("div");
@@ -192,16 +204,13 @@ function removeLoading() {
 async function sendMessage(text) {
   if (!text.trim() || !activeChatId) return;
 
-  // Capture chatId at call time — activeChatId may change while awaiting
   const chatId = activeChatId;
 
   appendMessage("user", text);
 
-  // Get history BEFORE saving the current message — Gemini must not see it twice
   const { chats = {} } = await chrome.storage.local.get("chats");
   const history = chats[chatId]?.messages || [];
 
-  // Now persist the user message so navigating away doesn't lose it
   if (chats[chatId]) {
     if (!chats[chatId].messages) chats[chatId].messages = [];
     chats[chatId].messages.push({ role: "user", text, timestamp: Date.now() });
@@ -218,13 +227,11 @@ async function sendMessage(text) {
   });
 
   if (response.error) {
-    // Show error inline; storage listener won't fire since nothing was saved
     if (activeChatId === chatId) {
       removeLoading();
       appendMessage("model", `Error: ${response.error}`);
     }
   }
-  // On success, the storage.onChanged listener detects the saved response and reloads
 }
 
 async function reloadMessages(chatId) {
@@ -238,7 +245,6 @@ async function reloadMessages(chatId) {
   }
 }
 
-// Send button & Enter key
 $("#btn-send").addEventListener("click", () => {
   const input = $("#user-input");
   sendMessage(input.value);
@@ -253,23 +259,19 @@ $("#user-input").addEventListener("keydown", (e) => {
   }
 });
 
-// Auto-resize textarea
 $("#user-input").addEventListener("input", function () {
   this.style.height = "auto";
   this.style.height = Math.min(this.scrollHeight, 100) + "px";
 });
 
-// Grounding toggle
 $("#grounding-toggle").addEventListener("change", () => {
   chrome.storage.local.set({ groundingEnabled: $("#grounding-toggle").checked });
 });
 
-// --- Pick up pending fact-checks from storage ---
 async function checkPendingFactCheck() {
   const { pendingFactCheck } = await chrome.storage.local.get("pendingFactCheck");
   if (pendingFactCheck) {
     await chrome.storage.local.remove("pendingFactCheck");
-    // Clear the badge
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs[0]) {
       chrome.action.setBadgeText({ text: "", tabId: tabs[0].id });
@@ -281,14 +283,11 @@ async function checkPendingFactCheck() {
   }
 }
 
-// Listen for storage changes
 chrome.storage.onChanged.addListener((changes) => {
-  // New pending fact-check arrived
   if (changes.pendingFactCheck && changes.pendingFactCheck.newValue) {
     checkPendingFactCheck();
   }
 
-  // Current chat's data was updated (e.g. response saved by background)
   if (changes.chats && activeChatId) {
     const updatedChats = changes.chats.newValue;
     if (!updatedChats) return;
@@ -296,21 +295,18 @@ chrome.storage.onChanged.addListener((changes) => {
     if (!chat) return;
     const messages = chat.messages || [];
     const lastMsg = messages[messages.length - 1];
-    // If response just arrived (last message is now from model) and loading is showing
     if (lastMsg && lastMsg.role === "model" && $("#loading-msg")) {
       reloadMessages(activeChatId);
     }
   }
 });
 
-// --- Utils ---
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
 }
 
-// --- Init ---
 initTheme();
 renderChatList();
 checkPendingFactCheck();

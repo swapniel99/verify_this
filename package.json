@@ -4,8 +4,8 @@
   "description": "",
   "main": "background.js",
   "scripts": {
-    "build": "esbuild src/background.js --bundle --outfile=background.js --format=iife",
-    "watch": "esbuild src/background.js --bundle --outfile=background.js --format=iife --watch"
+    "build": "esbuild src/background.js src/sidepanel.js --bundle --outdir=. --format=iife",
+    "watch": "esbuild src/background.js src/sidepanel.js --bundle --outdir=. --format=iife --watch"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +13,9 @@
   "type": "commonjs",
   "dependencies": {
     "@google/genai": "^1.50.1",
+    "marked": "^18.0.0"
+  },
+  "devDependencies": {
     "esbuild": "^0.28.0"
   }
 }
