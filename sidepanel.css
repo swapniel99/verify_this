@@ -285,8 +285,7 @@ header h1 {
   max-width: 95%;
   padding: 10px 14px;
   border-radius: 12px;
-  line-height: 1.5;
-  white-space: pre-wrap;
+  line-height: 1.4;
   word-wrap: break-word;
 }
 
@@ -294,6 +293,7 @@ header h1 {
   align-self: flex-end;
   background: var(--user-bubble);
   border-bottom-right-radius: 4px;
+  white-space: pre-wrap;
 }
 
 .message.model {
@@ -315,13 +315,13 @@ header h1 {
 
 /* Markdown Styles */
 .message h1, .message h2, .message h3 {
-  margin: 10px 0 6px 0;
+  margin: 6px 0 4px 0;
   font-size: 1.1em;
   font-weight: 600;
 }
 
 .message p {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .message p:last-child {
@@ -329,7 +329,7 @@ header h1 {
 }
 
 .message ul, .message ol {
-  margin: 8px 0;
+  margin: 4px 0;
   padding-left: 20px;
 }
 
