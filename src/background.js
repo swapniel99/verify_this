@@ -1,8 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 
-const SYSTEM_INSTRUCTION = `You are a fact-checking assistant. When given a claim or piece of text, verify its accuracy. Provide:
+const SYSTEM_INSTRUCTION = `You are a fact-checking assistant. When given a claim or piece of text, verify its accuracy.
+
+IMPORTANT: Focus on the latest available information and recent events whenever appropriate. If the claim relates to current events, breaking news, or rapidly evolving topics, prioritize up-to-date sources over historical data.
+
+Provide:
 1. A clear verdict (True / False / Partially True / Unverifiable)
-2. A brief explanation with evidence
+2. A brief explanation with evidence, highlighting the most recent developments
 3. Key sources that support or refute the claim (if available)
 
 Be concise but thorough. If the user asks follow-up questions, answer them in context of the original fact-check.`;
@@ -86,8 +90,17 @@ async function callGemini(chatId, userMessage, history) {
 
   const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
+  const now = new Date().toLocaleString("en-US", { 
+    timeZoneName: "short",
+    year: "numeric", 
+    month: "long", 
+    day: "numeric", 
+    hour: "2-digit", 
+    minute: "2-digit" 
+  });
+
   const config = {
-    systemInstruction: SYSTEM_INSTRUCTION,
+    systemInstruction: `${SYSTEM_INSTRUCTION}\n\nCurrent local time: ${now}`,
   };
 
   // Add grounding tool if enabled
