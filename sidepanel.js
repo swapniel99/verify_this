@@ -181,8 +181,11 @@ async function sendMessage(text) {
 
   appendMessage("user", text);
 
-  // Save user message to storage immediately so navigating away doesn't lose it
+  // Get history BEFORE saving the current message — Gemini must not see it twice
   const { chats = {} } = await chrome.storage.local.get("chats");
+  const history = chats[chatId]?.messages || [];
+
+  // Now persist the user message so navigating away doesn't lose it
   if (chats[chatId]) {
     if (!chats[chatId].messages) chats[chatId].messages = [];
     chats[chatId].messages.push({ role: "user", text, timestamp: Date.now() });
@@ -190,8 +193,6 @@ async function sendMessage(text) {
   }
 
   showLoading();
-
-  const history = chats[chatId]?.messages || [];
 
   const response = await chrome.runtime.sendMessage({
     type: "call-gemini",
