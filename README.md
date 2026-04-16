@@ -132,6 +132,8 @@ Uses Google's `@google/genai` SDK with:
 - **Model**: `gemini-3.1-flash-lite-preview`
 - **System instruction**: Configured for fact-checking task
 
+**Note**: Web search grounding (for citing sources) can be enabled with a paid Gemini API tier for enhanced fact-checking capabilities.
+
 ## Configuration
 
 ### Gemini API Key
