@@ -31,6 +31,14 @@ document.querySelectorAll(".theme-btn").forEach((btn) => {
   });
 });
 
+$("#btn-theme").addEventListener("click", async () => {
+  const { theme = "system" } = await chrome.storage.local.get("theme");
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const nextTheme = isDark ? "light" : "dark";
+  chrome.storage.local.set({ theme: nextTheme });
+  applyTheme(nextTheme);
+});
+
 // --- Navigation ---
 function showView(view) {
   ["chat-list-view", "chat-view", "settings-view"].forEach((id) => {
@@ -53,6 +61,11 @@ $("#btn-back").addEventListener("click", () => {
 $("#btn-settings").addEventListener("click", async () => {
   const { geminiApiKey = "" } = await chrome.storage.local.get("geminiApiKey");
   $("#api-key-input").value = geminiApiKey;
+  // Update theme buttons to match current theme
+  const { theme = "system" } = await chrome.storage.local.get("theme");
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.theme === theme);
+  });
   showView("settings-view");
 });
 
