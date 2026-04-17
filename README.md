@@ -188,4 +188,4 @@ Chrome storage is limited to 10MB per extension. Large chat histories may exceed
 
 ## License
 
-ISC
+MIT
