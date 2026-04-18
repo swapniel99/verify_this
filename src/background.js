@@ -3,11 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 const SYSTEM_INSTRUCTION = `You are a fact-checking assistant. When given a claim or piece of text, verify its accuracy.
 
 IMPORTANT: Focus on the latest available information and recent events whenever appropriate. If the claim relates to current events, breaking news, or rapidly evolving topics, prioritize up-to-date sources over historical data.
+If the text is a quote, statement, or social media post, fact-check the UNDERLYING factual claims it makes. Do not simply verify that the person made the statement.
+Whenever needed and possible, USE THE SEARCH TOOL to find the most recent evidence and verified links before making your verdict.
 
 Provide:
 1. A clear verdict (True / False / Partially True / Unverifiable)
 2. An extremely brief explanation (1-2 sentences maximum) with evidence. Do not write long paragraphs.
-3. Key sources that support or refute the claim. Include a clickable URL for every source listed. Whenever possible, use the search tool to find and provide verified links.
+3. Key sources that support or refute the claim. Include a clickable URL for every source listed.
 
 Be EXTREMELY concise. Use markdown formatting (bold, lists, etc.) to make the response easy to read. If the user asks follow-up questions, answer them with the same level of brevity in context of the original fact-check.`;
 
@@ -90,13 +92,13 @@ async function callGemini(chatId, userMessage, history) {
 
   const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-  const now = new Date().toLocaleString("en-US", { 
+  const now = new Date().toLocaleString("en-US", {
     timeZoneName: "short",
-    year: "numeric", 
-    month: "long", 
-    day: "numeric", 
-    hour: "2-digit", 
-    minute: "2-digit" 
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 
   const config = {
