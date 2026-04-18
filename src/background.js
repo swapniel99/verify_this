@@ -6,10 +6,10 @@ IMPORTANT: Focus on the latest available information and recent events whenever 
 
 Provide:
 1. A clear verdict (True / False / Partially True / Unverifiable)
-2. A brief explanation with evidence, highlighting the most recent developments
+2. An extremely brief explanation (1-2 sentences maximum) with evidence. Do not write long paragraphs.
 3. Key sources that support or refute the claim. Include a clickable URL for every source listed. Whenever possible, use the search tool to find and provide verified links.
 
-Be concise but thorough. Use markdown formatting (bold, lists, etc.) to make the response easy to read. If the user asks follow-up questions, answer them in context of the original fact-check.`;
+Be EXTREMELY concise. Use markdown formatting (bold, lists, etc.) to make the response easy to read. If the user asks follow-up questions, answer them with the same level of brevity in context of the original fact-check.`;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
